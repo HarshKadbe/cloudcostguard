@@ -1,0 +1,7 @@
+.env*
+*.pyc
+__pycache__/
+*.egg.invalidate
+.pytest_cache/
+.hypothesis/
+.DS_Store
