@@ -1,8 +1,8 @@
 # CloudCostGuard
 
-[![CI](https://github.com/nvidia/CloudCostGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/nvidia/CloudCostGuard/actions/workflows/ci.yml)
-[![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache-2.0-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
+[![CI](https://github.com/HarshKadbe/cloudcostguard/actions/workflows/ci.yml/badge.svg)](https://github.com/HarshKadbe/cloudcostguard/actions/workflows/ci.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-yellow.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 AWS Cost & Waste Scanner CLI
 
@@ -25,27 +25,23 @@ CloudCostGuard is an open-source tool for identifying AWS resources that are unu
 
 ```
 CloudCostGuard CLI
-  ├── EC2 Analyzer
-  ├── EBS Analyzer
-  ├── Elastic IP Analyzer
-  └── S3 Analyzer
-      
-  └── Reporting
-      ├── Terminal (Rich-based table output)
-      ├── JSON (machine-readable)
-      └── HTML (standalone report)
+├── EC2 Analyzer
+├── EBS Analyzer
+├── Elastic IP Analyzer
+└── S3 Analyzer
+
+│
+└── Reporting
+    ├── Terminal (Rich-based table output)
+    ├── JSON (machine-readable)
+    └── HTML (standalone report)
 ```
 
 ## Installation
 
 ```bash
-# Using pip
-pip install cloudcostguard
-
-# From source
 git clone https://github.com/HarshKadbe/cloudcostguard.git
-cd CloudCostGuard
-pip install -e .
+cd cloudcostguard
 ```
 
 ## Quick Start
@@ -68,6 +64,9 @@ cloudcostguard scan --format html --output report.html
 
 # Verbose mode with cost estimates
 cloudcostguard scan --verbose
+
+# Show version
+cloudcostguard version
 ```
 
 ## AWS IAM Permissions
@@ -125,16 +124,16 @@ cloudcostguard version
 ```bash
 $ cloudcostguard scan --format json
 {
-  "scan": {
+"scan": {
     "timestamp": "2024-01-15T10:30:00Z",
     "account_id": "123456789012",
     "regions": ["us-east-1"]
-  },
-  "summary": {
+},
+"summary": {
     "resources_scanned": 42,
     "potential_monthly_waste": 79.50
-  },
-  "findings": []
+},
+"findings": []
 }
 ```
 
@@ -152,7 +151,7 @@ docker run --rm \
 
 # Run with access keys
 docker run --rm \
-  -e AWS_ACCESS_KEY_ID=AKIA...
+  -e AWS_ACCESS_KEY_ID=AKIA... \
   -e AWS_SECRET_ACCESS_KEY=... \
   -e AWS_DEFAULT_REGION=us-east-1 \
   cloudcostguard scan
@@ -194,7 +193,7 @@ jobs:
 - Credentials are never stored in source code
 - Uses boto3's standard credential chain (env vars, shared credentials, IAM roles)
 - Default read-only mode - no resources are modified or deleted
-- See [SECURITY.md](SECURITY.md) for details
+- See SECURITY.md for details
 
 ## Cost Estimation Disclaimer
 
@@ -211,8 +210,8 @@ Always review your actual AWS billing dashboard before making financial decision
 
 ```bash
 # Clone and install
-git clone https://github.com/nvidia/CloudCostGuard.git
-cd CloudCostGuard
+git clone https://github.com/HarshKadbe/cloudcostguard.git
+cd cloudcostguard
 pip install -e ".[dev]"
 
 # Run tests
@@ -246,14 +245,14 @@ Run all tests: `pytest -q`
 | Version | Features |
 |---------|----------|
 | v0.1 | EC2, EBS, Elastic IP, S3, CLI, JSON, HTML, tests, Docker, CI |
-| v0.2 | RDS, NAT Gateway, Load Balancer, CloudWatch utilization |
-| v0.3 | AWS Pricing API, Cost Explorer integration, regional pricing |
+| v0.2 | RDS, NAT Gateway, Load Balancer, CloudWatch utilization analysis |
+| v0.3 | AWS Pricing API, Cost Explorer integration, better regional pricing |
 | v0.4 | GitHub Action, PR cost comments |
 | v0.5 | Multi-account support, AWS Organizations |
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines, coding standards, and pull request process.
+See CONTRIBUTING.md for development guidelines, coding standards, and pull request process.
 
 ## License
 
