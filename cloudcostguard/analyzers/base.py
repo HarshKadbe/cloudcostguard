@@ -11,7 +11,7 @@ class BaseAnalyzer:
     """Base class for all CloudCostGuard analyzers."""
 
     name: str = "base"
-    services: ClassVar[list[str]] = ["ec2"]
+    services: ClassVar[tuple[str, ...]] = ("ec2",)
 
     def __init__(self):
         self.resources_scanned = 0

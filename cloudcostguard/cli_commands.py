@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import typer
 
 from cloudcostguard.analyzers.ebs import EBSAnalyzer
@@ -13,6 +15,9 @@ from cloudcostguard.models.finding import Finding
 from cloudcostguard.reports.html_report import render_html
 from cloudcostguard.reports.json_report import JSONReport
 from cloudcostguard.reports.terminal import TerminalReport
+
+# Configure module-level logger
+LOGGER = logging.getLogger(__name__)
 
 
 def scan_all_services(
@@ -51,6 +56,7 @@ def scan_all_services(
                 resources_scanned += analyzer.resources_scanned
                 all_findings.extend(findings)
             except Exception as e:
+                LOGGER.exception(f"Error scanning {service_name} in {region_name}")
                 if verbose:
                     typer.echo(f"Error scanning {service_name} in {region_name}: {e}")
                 continue
@@ -59,7 +65,9 @@ def scan_all_services(
         "account_id": get_account_id() or "unknown",
         "region": ", ".join(selected_regions),
         "resources_scanned": resources_scanned,
-        "potential_monthly_waste": round(sum(f.estimated_monthly_cost or 0.0 for f in all_findings), 2),
+        "potential_monthly_waste": round(
+            sum(f.estimated_monthly_cost or 0.0 for f in all_findings), 2
+        ),
         "findings": all_findings,
     }
 
@@ -67,7 +75,9 @@ def scan_all_services(
         "findings": all_findings,
         "summary": summary,
         "regions": selected_regions,
-        "timestamp": __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime()),
+        "timestamp": __import__("time").strftime(
+            "%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime()
+        ),
     }
 
 
@@ -90,6 +100,7 @@ def main(
     """AWS Cost & Waste Scanner CLI."""
     if version:
         from cloudcostguard import __version__
+
         typer.echo(f"cloudcostguard {__version__}")
         raise typer.Exit()
 
@@ -171,6 +182,7 @@ def scan(
 def version(_: bool = False) -> None:
     """Show the version."""
     from cloudcostguard import __version__
+
     typer.echo(f"cloudcostguard {__version__}")
 
 

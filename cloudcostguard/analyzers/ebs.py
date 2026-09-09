@@ -70,6 +70,7 @@ class EBSAnalyzer(BaseAnalyzer):
                 # Check for obviously stale volumes (very old, unattached or minimal attachment)
                 elif attachments and create_time:
                     from datetime import datetime
+
                     now = datetime.now(UTC)
                     days_since_creation = (now - create_time).days
                     if days_since_creation > 365:  # > 1 year old

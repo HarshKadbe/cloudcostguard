@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, OperationNotPageableError
 
 from cloudcostguard.analyzers.base import BaseAnalyzer, Confidence, Finding, Severity
 
@@ -14,8 +16,8 @@ PRICING_ELASTIC_IP_MONTHLY = 0.005
 class ElasticIPAnalyzer(BaseAnalyzer):
     """Analyzer for Elastic IPs."""
 
-    name = "elastic_ip"
-    services = ["ec2"]
+    name: str = "elastic_ip"
+    services: ClassVar[tuple[str, ...]] = ("ec2",)
 
     def scan(self, region: str, verbose: bool = False) -> list[Finding]:
         """Scan Elastic IPs for unused/unassociated addresses."""
@@ -31,8 +33,8 @@ class ElasticIPAnalyzer(BaseAnalyzer):
                 paginator = client.get_paginator("describe_addresses")
                 for page in paginator.paginate(PublicIp=False):
                     addresses.extend(page.get("Addresses", []))
-            except (ClientError, Exception):
-                # Fallback: describe_addresses may not be paginatable; continue with empty results
+            except ClientError:
+                # Fallback: describe_addresses may fail; continue with empty results
                 pass
 
             self.resources_scanned = len(addresses)
@@ -74,8 +76,9 @@ class ElasticIPAnalyzer(BaseAnalyzer):
                     )
                     findings.append(finding)
 
-        except (ClientError, Exception):
-            pass  # Silently handle AWS errors; findings will be empty
+        except (ClientError, OperationNotPageableError):
+            # Fallback: describe_addresses may not be paginatable; continue with empty results
+            pass
 
         return findings
 
