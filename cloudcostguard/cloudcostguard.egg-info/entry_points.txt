@@ -1,0 +1,2 @@
+[console_scripts]
+cloudcostguard = cloudcostguard.cli:run

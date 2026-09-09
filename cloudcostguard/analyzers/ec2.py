@@ -101,9 +101,10 @@ class EC2Analyzer(BaseAnalyzer):
                             findings.append(finding)
 
         except ClientError as e:
-            typer.echo(f"AWS Error scanning EC2 in {region}: {e}")
+            print(f"AWS Error scanning EC2 in {region}: {e}")
         except Exception as e:
-            typer.echo(f"Error scanning EC2 in {region}: {e}")
+            # Read-only: continue scan even if individual analyzer fails
+            print(f"Error scanning EC2 in {region}: {e}")
 
         return findings
 

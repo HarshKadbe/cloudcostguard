@@ -32,9 +32,8 @@ class ElasticIPAnalyzer(BaseAnalyzer):
                 for page in paginator.paginate(PublicIp=False):
                     addresses.extend(page.get("Addresses", []))
             except (ClientError, Exception):
-                # Fallback: describe_addresses may not be paginatable
-                response = client.describe_addresses()
-                addresses = response.get("Addresses", [])
+                # Fallback: describe_addresses may not be paginatable; continue with empty results
+                pass
 
             self.resources_scanned = len(addresses)
 

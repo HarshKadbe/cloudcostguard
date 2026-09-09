@@ -1,3 +1,4 @@
+LICENSE
 README.md
 pyproject.toml
 cloudcostguard/analyzers/__init__.py
@@ -11,6 +12,7 @@ cloudcostguard/aws/client.py
 cloudcostguard/cloudcostguard.egg-info/PKG-INFO
 cloudcostguard/cloudcostguard.egg-info/SOURCES.txt
 cloudcostguard/cloudcostguard.egg-info/dependency_links.txt
+cloudcostguard/cloudcostguard.egg-info/entry_points.txt
 cloudcostguard/cloudcostguard.egg-info/requires.txt
 cloudcostguard/cloudcostguard.egg-info/top_level.txt
 cloudcostguard/models/__init__.py

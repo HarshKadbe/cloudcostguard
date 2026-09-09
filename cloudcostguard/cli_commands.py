@@ -2,33 +2,30 @@
 
 from __future__ import annotations
 
-import sys
 import typer
-from typing import List, Optional
 
-from cloudcostguard.analyzers.base import BaseAnalyzer
-from cloudcostguard.config import get_region, get_account_id
-from cloudcostguard.models.finding import Finding, Severity, Confidence
-from cloudcostguard.reports.terminal import TerminalReport
-from cloudcostguard.reports.json_report import JSONReport
-from cloudcostguard.reports.html_report import render_html
-from cloudcostguard.analyzers.ec2 import EC2Analyzer
 from cloudcostguard.analyzers.ebs import EBSAnalyzer
+from cloudcostguard.analyzers.ec2 import EC2Analyzer
 from cloudcostguard.analyzers.elastic_ip import ElasticIPAnalyzer
 from cloudcostguard.analyzers.s3 import S3Analyzer
+from cloudcostguard.config import get_account_id, get_region
+from cloudcostguard.models.finding import Finding
+from cloudcostguard.reports.html_report import render_html
+from cloudcostguard.reports.json_report import JSONReport
+from cloudcostguard.reports.terminal import TerminalReport
 
 
 def scan_all_services(
-    regions: Optional[List[str]] = None,
-    services: Optional[List[str]] = None,
+    regions: list[str] | None = None,
+    services: list[str] | None = None,
     verbose: bool = False,
 ) -> dict:
     """Scan AWS resources for cost and waste analysis."""
     if regions is None:
         region = get_region() or "us-east-1"
-        regions = [region]
+        selected_regions = [region]
     else:
-        regions = regions
+        selected_regions = regions
 
     if services is None:
         services = ["ec2", "ebs", "elastic_ip", "s3"]
@@ -43,7 +40,7 @@ def scan_all_services(
         "s3": S3Analyzer(),
     }
 
-    for region_name in regions:
+    for region_name in selected_regions:
         for service_name in services:
             if service_name not in analyzer_map:
                 continue
@@ -60,7 +57,7 @@ def scan_all_services(
 
     summary: dict = {
         "account_id": get_account_id() or "unknown",
-        "region": ", ".join(regions),
+        "region": ", ".join(selected_regions),
         "resources_scanned": resources_scanned,
         "potential_monthly_waste": round(sum(f.estimated_monthly_cost or 0.0 for f in all_findings), 2),
         "findings": all_findings,
@@ -69,7 +66,7 @@ def scan_all_services(
     return {
         "findings": all_findings,
         "summary": summary,
-        "regions": regions,
+        "regions": selected_regions,
         "timestamp": __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime()),
     }
 
@@ -175,11 +172,6 @@ def version(_: bool = False) -> None:
     """Show the version."""
     from cloudcostguard import __version__
     typer.echo(f"cloudcostguard {__version__}")
-
-
-def main() -> None:
-    """Entry point for CLI."""
-    typer.run(app)
 
 
 if __name__ == "__main__":
