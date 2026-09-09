@@ -43,7 +43,13 @@ class TerminalReport:
         for f in findings:
             by_severity.setdefault(f.severity, []).append(f)
 
-        for sev in [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO]:
+        for sev in [
+            Severity.CRITICAL,
+            Severity.HIGH,
+            Severity.MEDIUM,
+            Severity.LOW,
+            Severity.INFO,
+        ]:
             findings_list = by_severity.get(sev, [])
             if not findings_list:
                 continue

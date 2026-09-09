@@ -9,7 +9,9 @@ def run_cli(args: list) -> subprocess.CompletedProcess:
     # Use python3 -m to run the CLI
     return subprocess.run(
         ["python3", "-m", "cloudcostguard"] + args,
-        capture_output=True, text=True, check=False
+        capture_output=True,
+        text=True,
+        check=False,
     )
 
 
@@ -17,7 +19,10 @@ def test_cli_help():
     """Test --help command."""
     result = run_cli(["--help"])
     assert result.returncode == 0
-    assert "cloudcostguard" in result.stdout.lower() or "cloudcostguard" in result.stderr.lower()
+    assert (
+        "cloudcostguard" in result.stdout.lower()
+        or "cloudcostguard" in result.stderr.lower()
+    )
 
 
 def test_scan_help():

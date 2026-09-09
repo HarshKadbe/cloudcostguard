@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC
+from typing import ClassVar
 
 import boto3
 from botocore.exceptions import ClientError
@@ -13,8 +14,8 @@ from cloudcostguard.analyzers.base import BaseAnalyzer, Confidence, Finding, Sev
 class EC2Analyzer(BaseAnalyzer):
     """Analyzer for EC2 resources."""
 
-    name = "ec2"
-    services = ["ec2"]
+    name: str = "ec2"
+    services: ClassVar[tuple[str, ...]] = ("ec2",)
 
     def scan(self, region: str, verbose: bool = False) -> list[Finding]:
         """Scan EC2 instances for waste indicators."""
@@ -45,6 +46,7 @@ class EC2Analyzer(BaseAnalyzer):
                 if state == "stopped":
                     # Calculate how long it's been stopped
                     from datetime import datetime
+
                     now = datetime.now(UTC)
                     if launch_time:
                         age_days = (now - launch_time).days
@@ -54,6 +56,7 @@ class EC2Analyzer(BaseAnalyzer):
                     cost = self._estimate_ec2_cost(instance_type) if verbose else 0.0
 
                     finding = self._create_finding(
+                        region=region,
                         service="ec2",
                         resource_id=instance_id,
                         resource_type="instance",
@@ -62,7 +65,9 @@ class EC2Analyzer(BaseAnalyzer):
                         description=f"EC2 instance {instance_id} ({instance_type}) is stopped",
                         evidence=f"Instance state: stopped; Launched: {launch_time}; Age: ~{age_days} days",
                         cost=cost,
-                        confidence=Confidence.HIGH if age_days > 30 else Confidence.MEDIUM,
+                        confidence=Confidence.HIGH
+                        if age_days > 30
+                        else Confidence.MEDIUM,
                         metadata={
                             "instance_type": instance_type,
                             "state": state,
@@ -75,13 +80,19 @@ class EC2Analyzer(BaseAnalyzer):
                 # Check for old/stale instances (launched more than 90 days ago with no tags)
                 if launch_time:
                     from datetime import datetime
+
                     now = datetime.now(UTC)
                     days_since_launch = (now - launch_time).days
                     if days_since_launch > 90:
                         has_name = name is not None and name != ""
                         if not has_name or age_days > 180:
-                            cost = self._estimate_ec2_cost(instance_type) if verbose else 0.0
+                            cost = (
+                                self._estimate_ec2_cost(instance_type)
+                                if verbose
+                                else 0.0
+                            )
                             finding = self._create_finding(
+                                region=region,
                                 service="ec2",
                                 resource_id=instance_id,
                                 resource_type="instance",
@@ -102,9 +113,6 @@ class EC2Analyzer(BaseAnalyzer):
 
         except ClientError as e:
             print(f"AWS Error scanning EC2 in {region}: {e}")
-        except Exception as e:
-            # Read-only: continue scan even if individual analyzer fails
-            print(f"Error scanning EC2 in {region}: {e}")
 
         return findings
 

@@ -8,7 +8,7 @@ def test_s3_empty_bucket():
     """Test detection of empty S3 buckets."""
     analyzer = S3Analyzer()
     findings = analyzer.scan("us-east-1", verbose=True)
-    
+
     # Should find at least some finding about the bucket
     # In a real account with empty buckets, this would find them
     # In moto, bucket may or may not have objects depending on setup
@@ -24,7 +24,7 @@ def test_s3_bucket_with_objects():
     """Test that buckets with recent activity don't produce findings."""
     analyzer = S3Analyzer()
     findings = analyzer.scan("us-east-1", verbose=True)
-    
+
     # Findings will vary based on bucket contents in mock
     for finding in findings:
         assert finding.evidence
@@ -41,7 +41,7 @@ def test_s3_finding_structure():
     """Test that S3 findings have correct structure."""
     analyzer = S3Analyzer()
     findings = analyzer.scan("us-east-1", verbose=True)
-    
+
     for finding in findings:
         assert finding.service == "s3"
         assert finding.resource_type == "bucket"

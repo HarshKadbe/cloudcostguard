@@ -52,7 +52,9 @@ class AWSClient:
                 original_error=e,
             )
 
-    def list_resources(self, paginator_name: str = "paginator", **kwargs) -> list[dict[str, Any]]:
+    def list_resources(
+        self, paginator_name: str = "paginator", **kwargs
+    ) -> list[dict[str, Any]]:
         """List resources using a paginator if available."""
         client = self.client
         if hasattr(client, f"{paginator_name}"):
@@ -63,7 +65,11 @@ class AWSClient:
                 resources.extend(page)
             return resources
         else:
-            result = client.list_objects_v2(**kwargs) if "MaxKeys" in kwargs else client.list_objects(**kwargs)
+            result = (
+                client.list_objects_v2(**kwargs)
+                if "MaxKeys" in kwargs
+                else client.list_objects(**kwargs)
+            )
             return result.get("Contents", []) if isinstance(result, dict) else []
 
     def describe_resource(self, resource_id: str, **kwargs) -> dict[str, Any] | None:
@@ -73,4 +79,6 @@ class AWSClient:
             return caller(ResourceId=resource_id, **kwargs)
         except (ClientError, AttributeError):
             return None
+
+
 AWSError = ClientError

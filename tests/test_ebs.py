@@ -9,23 +9,28 @@ from cloudcostguard.models.finding import Severity
 def test_ebs_unattached_volume():
     """Test detection of unattached EBS volumes."""
     ec2_client = boto3.client("ec2", region_name="us-east-1")
-    
+
     # Create an unattached volume
     ec2_client.create_volume(Size=10, AvailabilityZone="us-east-1a")
-    
+
     analyzer = EBSAnalyzer()
     findings = analyzer.scan("us-east-1", verbose=True)
-    
+
     # Should find the unattached volume
-    assert len(findings) > 0, f"Expected to find unattached EBS volumes, got {len(findings)}"
-    
+    assert len(findings) > 0, (
+        f"Expected to find unattached EBS volumes, got {len(findings)}"
+    )
+
     for finding in findings:
         assert finding.service == "ebs"
         assert finding.resource_type == "volume"
         assert finding.severity == Severity.HIGH
         assert finding.estimated_monthly_cost >= 0
         # Unattached volumes should have no attachments
-        assert "unattached" in finding.evidence.lower() or "unattached" in finding.title.lower()
+        assert (
+            "unattached" in finding.evidence.lower()
+            or "unattached" in finding.title.lower()
+        )
 
 
 def test_ebs_attached_volume():
@@ -46,10 +51,10 @@ def test_ebs_stale_volume():
     """Test detection of stale EBS volumes."""
     ec2_client = boto3.client("ec2", region_name="us-east-1")
     ec2_client.create_volume(Size=10, AvailabilityZone="us-east-1a")
-    
+
     analyzer = EBSAnalyzer()
     findings = analyzer.scan("us-east-1", verbose=True)
-    
+
     # Just check the finding structure
     for finding in findings:
         assert finding.resource_type == "volume"
@@ -66,10 +71,10 @@ def test_ebs_finding_structure():
     """Test that EBS findings have correct structure."""
     ec2_client = boto3.client("ec2", region_name="us-east-1")
     ec2_client.create_volume(Size=10, AvailabilityZone="us-east-1a")
-    
+
     analyzer = EBSAnalyzer()
     findings = analyzer.scan("us-east-1", verbose=True)
-    
+
     for finding in findings:
         assert finding.service in ["ebs", "ec2"]
         assert finding.resource_type == "volume"

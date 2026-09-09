@@ -10,21 +10,23 @@ from cloudcostguard.models.finding import Severity
 def test_elastic_ip_unused():
     """Test detection of unused Elastic IPs."""
     ec2_client = boto3.client("ec2", region_name="us-east-1")
-    
+
     # Try to allocate an Elastic IP (may fail due to limits in mock)
     try:
         allocation = ec2_client.allocate_address()
         alloc_id = allocation["AllocationId"]
     except ClientError:
         alloc_id = None
-    
+
     analyzer = ElasticIPAnalyzer()
     findings = analyzer.scan("us-east-1", verbose=True)
-    
+
     # If we allocated an IP, should find it
     # If not, still check findings structure
     if alloc_id:
-        assert len(findings) > 0, f"Expected to find unused Elastic IPs, got {len(findings)}"
+        assert len(findings) > 0, (
+            f"Expected to find unused Elastic IPs, got {len(findings)}"
+        )
         for finding in findings:
             assert finding.service == "ec2"
             assert finding.resource_type == "elastic_ip"
@@ -48,7 +50,7 @@ def test_elastic_ip_finding_structure():
     boto3.client("ec2", region_name="us-east-1")
     analyzer = ElasticIPAnalyzer()
     findings = analyzer.scan("us-east-1", verbose=True)
-    
+
     for finding in findings:
         assert finding.service == "ec2"
         assert finding.resource_type == "elastic_ip"

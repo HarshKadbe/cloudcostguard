@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC
+from typing import ClassVar
 
 import boto3
 import typer
@@ -14,8 +15,8 @@ from cloudcostguard.analyzers.base import BaseAnalyzer, Confidence, Finding, Sev
 class S3Analyzer(BaseAnalyzer):
     """Analyzer for S3 buckets."""
 
-    name = "s3"
-    services = ["s3"]
+    name: str = "s3"
+    services: ClassVar[tuple[str, ...]] = ("s3",)
 
     def scan(self, region: str, verbose: bool = False) -> list[Finding]:
         """Scan S3 buckets for potentially stale/unused buckets."""
@@ -45,18 +46,23 @@ class S3Analyzer(BaseAnalyzer):
 
                 try:
                     # Check if bucket has any objects
-                    objects_response = client.list_objects_v2(Bucket=bucket_name, MaxKeys=1)
+                    objects_response = client.list_objects_v2(
+                        Bucket=bucket_name, MaxKeys=1
+                    )
                     has_objects = objects_response.get("KeyCount", 0) > 0
                     last_modified = None
                     if has_objects:
                         # Get the most recent object
                         objects = client.list_objects_v2(Bucket=bucket_name, MaxKeys=1)
                         if objects.get("KeyCount", 0) > 0:
-                            last_modified = objects.get("Contents", [{}])[0].get("LastModified")
+                            last_modified = objects.get("Contents", [{}])[0].get(
+                                "LastModified"
+                            )
 
                     days_since_activity = 0
                     if last_modified:
                         from datetime import datetime
+
                         now = datetime.now(UTC)
                         # Make aware if naive
                         lm = last_modified
@@ -72,13 +78,17 @@ class S3Analyzer(BaseAnalyzer):
                             title = "Potentially unused S3 bucket"
                             description = f"S3 bucket {bucket_name} has no objects and is {days_since_activity} days old"
                             evidence = f"Bucket created: {creation_date}; No objects found; Last activity: {days_since_activity} days ago"
-                            cost = 0.0  # S3 pricing varies too much to estimate precisely
+                            cost = (
+                                0.0  # S3 pricing varies too much to estimate precisely
+                            )
                             confidence = Confidence.MEDIUM
                         elif not has_objects:
                             severity = Severity.LOW
                             title = "Empty S3 bucket"
                             description = f"S3 bucket {bucket_name} is empty"
-                            evidence = f"Bucket created: {creation_date}; No objects found"
+                            evidence = (
+                                f"Bucket created: {creation_date}; No objects found"
+                            )
                             cost = 0.0
                             confidence = Confidence.LOW
                         else:
@@ -91,6 +101,7 @@ class S3Analyzer(BaseAnalyzer):
                             confidence = Confidence.LOW
 
                         finding = self._create_finding(
+                            region=region,
                             service="s3",
                             resource_id=bucket_name,
                             resource_type="bucket",
@@ -102,7 +113,9 @@ class S3Analyzer(BaseAnalyzer):
                             confidence=confidence,
                             metadata={
                                 "bucket_name": bucket_name,
-                                "creation_date": str(creation_date) if creation_date else "unknown",
+                                "creation_date": str(creation_date)
+                                if creation_date
+                                else "unknown",
                                 "days_since_activity": days_since_activity,
                                 "owner_id": owner_id,
                             },
@@ -111,7 +124,9 @@ class S3Analyzer(BaseAnalyzer):
 
                 except ClientError as e:
                     # May not have permissions to list objects
-                    typer.echo(f"Permission denied listing objects in {bucket_name}: {e}")
+                    typer.echo(
+                        f"Permission denied listing objects in {bucket_name}: {e}"
+                    )
                     continue
 
         except ClientError as e:

@@ -19,7 +19,7 @@ def test_finding_creation():
         confidence=Confidence.HIGH,
         metadata={"key": "value"},
     )
-    
+
     assert finding.service == "ec2"
     assert finding.resource_id == "i-12345678"
     assert finding.severity == Severity.HIGH
@@ -28,12 +28,12 @@ def test_finding_creation():
     assert finding.currency == "USD"
     assert finding.confidence == Confidence.HIGH
     assert finding.metadata == {"key": "value"}
-    
+
     # Test to_dict conversion
     d = finding.to_dict()
     assert d["severity"] == "high"
     assert d["confidence"] == "high"
-    
+
     # Test from_dict roundtrip
     finding2 = Finding.from_dict(d)
     assert finding2 == finding
@@ -50,7 +50,7 @@ def test_finding_defaults():
         title="Low finding",
         description="A low severity finding",
     )
-    
+
     assert finding.estimated_monthly_cost == 0.0
     assert finding.currency == "USD"
     assert finding.confidence == Confidence.MEDIUM
