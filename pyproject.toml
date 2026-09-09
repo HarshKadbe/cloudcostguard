@@ -22,10 +22,14 @@ dev = [
     "mypy>=1.10.0",
 ]
 
+[project.scripts]
+cloudcostguard = "cloudcostguard.cli:run"
+
 [tool.setuptools.packages.find]
 where = ["cloudcostguard"]
 
-[tool.setuptools.entry-points]
-console_scripts = [
-    "cloudcostguard=cloudcostguard.cli:run",
-]
+[tool.ruff]
+exclude = [".git", "docs/", "*.egg-info/"]
+
+[tool.mypp]
+python_version = "3.12"

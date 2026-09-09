@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from datetime import UTC
+
 import boto3
 from botocore.exceptions import ClientError
 
-from cloudcostguard.analyzers.base import BaseAnalyzer, Finding, Severity, Confidence
+from cloudcostguard.analyzers.base import BaseAnalyzer, Confidence, Finding, Severity
 
 
 class EBSAnalyzer(BaseAnalyzer):
@@ -67,8 +69,8 @@ class EBSAnalyzer(BaseAnalyzer):
                     findings.append(finding)
                 # Check for obviously stale volumes (very old, unattached or minimal attachment)
                 elif attachments and create_time:
-                    from datetime import datetime, timezone
-                    now = datetime.now(timezone.utc)
+                    from datetime import datetime
+                    now = datetime.now(UTC)
                     days_since_creation = (now - create_time).days
                     if days_since_creation > 365:  # > 1 year old
                         cost = self._estimate_ebs_cost(size) if verbose else 0.0

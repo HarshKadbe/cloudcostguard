@@ -2,8 +2,8 @@ Metadata-Version: 2.4
 Name: cloudcostguard
 Version: 0.1.0
 Summary: AWS Cost & Waste Scanner CLI
-License-Expression: Apache-2.0
 Requires-Python: >=3.12
+License-File: LICENSE
 Requires-Dist: boto3>=1.35.0
 Requires-Dist: rich>=13.0.0
 Requires-Dist: pydantic>=2.7.0
@@ -13,3 +13,4 @@ Requires-Dist: pytest>=8.0.0; extra == "dev"
 Requires-Dist: moto>=6.0.0; extra == "dev"
 Requires-Dist: ruff>=0.8.0; extra == "dev"
 Requires-Dist: mypy>=1.10.0; extra == "dev"
+Dynamic: license-file

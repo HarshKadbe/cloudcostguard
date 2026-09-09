@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from rich.console import Console
 from rich.text import Text
 
@@ -18,7 +20,7 @@ class TerminalReport:
         """Render findings and summary to terminal."""
         self._render_header(summary)
         self._render_findings(findings)
-        self._render_summary(summary)
+        self._render_summary(findings, summary)
 
     def _render_header(self, summary: dict[str, Any]) -> None:
         """Render the header section."""
@@ -89,7 +91,7 @@ class TerminalReport:
             self.console.print(f"  Evidence: {evidence}")
         self.console.print(f"  Estimated monthly waste: {cost_str} {finding.currency}")
 
-    def _render_summary(self, summary: dict[str, Any]) -> None:
+    def _render_summary(self, findings: list[Finding], summary: dict[str, Any]) -> None:
         """Render the summary section."""
         self.console.print("────────────────────────────────────────")
         total_high = sum(1 for f in findings if f.severity == Severity.HIGH)
