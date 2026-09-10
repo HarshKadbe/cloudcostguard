@@ -261,6 +261,8 @@ Always review your actual AWS billing dashboard before making financial decision
 # Clone and install
 git clone https://github.com/HarshKadbe/cloudcostguard.git
 cd cloudcostguard
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
 
 # Run tests
