@@ -41,6 +41,7 @@ class Finding(BaseModel):
     estimated_monthly_cost: float = 0.0
     currency: str = "USD"
     confidence: Confidence = Confidence.MEDIUM
+    recommendation: str = ""
     metadata: dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 

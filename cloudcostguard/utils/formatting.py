@@ -10,7 +10,7 @@ def format_currency(amount: float, currency: str = "USD") -> str:
     return f"${amount:.2f} {currency}"
 
 
-def format_bytes(size_bytes: int) -> str:
+def format_bytes(size_bytes: float) -> str:
     """Format bytes into human-readable size."""
     if size_bytes == 0:
         return "0 B"
