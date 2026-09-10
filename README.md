@@ -12,7 +12,7 @@ CloudCostGuard is an open-source tool for identifying AWS resources that are unu
 
 ## Features
 
-- **EC2 analyzer**: Detects stopped instances, stale instances, and low-activity instances
+- **EC2 analyzer**: Detects stopped and potentially stale instances.
 - **EBS analyzer**: Identifies unattached volumes and obviously stale volumes
 - **Elastic IP analyzer**: Finds unused/unassociated Elastic IPs
 - **S3 analyzer**: Detects potentially unused/empty buckets
@@ -153,7 +153,14 @@ docker run --rm \
   -e AWS_DEFAULT_REGION=us-east-1 \
   cloudcostguard scan
 
-# Run with access keys
+# Run with GitHub Actions OIDC (recommended for CI/CD)
+# See GitHub Actions section below for configuration details
+
+# Run with EC2/ECS IAM role (preferred for long-running tasks)
+# The instance profile attached to the EC2/ECS task role must contain
+# the read-only CloudCostGuard IAM permissions listed below.
+
+# Run with access keys (less preferred - do not commit or store long-lived credentials)
 docker run --rm \
   -e AWS_ACCESS_KEY_ID=AKIA... \
   -e AWS_SECRET_ACCESS_KEY=... \
@@ -164,7 +171,7 @@ docker run --rm \
 ## GitHub Actions
 
 ```yaml
-# Example workflow running CloudCostGuard
+# Example workflow running CloudCostGuard with GitHub Actions OIDC
 name: Cost Scan
 
 on:
@@ -176,6 +183,9 @@ on:
 jobs:
   cost-scan:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # required for OIDC
+
     steps:
       - uses: actions/checkout@v4
       
@@ -188,8 +198,43 @@ jobs:
         run: |
           pip install -e ".[dev]"
       
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::ACCOUNT_ID:role/CostScanRole
+          aws-region: us-east-1
+      
       - name: Run CloudCostGuard
         run: cloudcostguard scan --format json --output cost-report.json
+```
+
+The IAM role `CostScanRole` must contain only the required read-only CloudCostGuard permissions:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sts:GetCallerIdentity",
+                "ec2:DescribeInstances",
+                "ec2:DescribeInstancesStatus",
+                "ec2:DescribeVolumes",
+                "ec2:DescribeAddresses",
+                "ec2:DescribeTags",
+                "s3:ListAllMyBuckets",
+                "s3:GetBucketLocation",
+                "s3:ListBucket",
+                "s3:ListBucketVersions"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+> **Note**: Replace `ACCOUNT_ID` with your AWS account ID and `CostScanRole` with the name of an IAM role that has only the above permissions. Do not use a role with broad administrator access.
 ```
 
 ## Security
@@ -233,14 +278,14 @@ cloudcostguard scan
 
 ## Testing
 
-Tests use `moto` to mock AWS API calls. Every analyzer has test coverage for:
+Tests use `moto` to mock AWS API calls. Test coverage per analyzer:
 
-- Normal resources
-- Waste findings
-- Empty account
-- AWS API errors
-- Missing permissions
-- Multiple regions
+- **EC2**: stopped instances, stale instances, finding structure, resources_scanned
+- **EBS**: unattached volumes, stale volumes, finding structure, resources_scanned
+- **Elastic IPs**: unused IPs (when allocated), finding structure, resources_scanned
+- **S3**: empty bucket findings, bucket with objects findings, finding structure, resources_scanned
+- **Models**: finding creation, default values, severity/conformance enums, to_dict/from_dict roundtrip
+- **CLI**: `--help`, `scan --help`, table/JSON output, JSON structure, version
 
 Run all tests: `pytest -q`
 
