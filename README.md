@@ -42,6 +42,10 @@ CloudCostGuard CLI
 ```bash
 git clone https://github.com/HarshKadbe/cloudcostguard.git
 cd cloudcostguard
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -e ".[dev]"
 ```
 
 ## Quick Start
