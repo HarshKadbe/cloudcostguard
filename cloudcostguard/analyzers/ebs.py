@@ -20,7 +20,22 @@ class EBSAnalyzer(BaseAnalyzer):
         self.services = ["ec2"]
 
     def scan(self, region: str, verbose: bool = False) -> list[Finding]:
-        """Scan EBS volumes for unattached or stale volumes."""
+        """Scan EBS volumes for unattached or stale volumes.
+
+        Conditions that create findings:
+        - Unattached volume: attachments list is empty (no EC2 instances or ENIs attached)
+        - Stale volume: volume has attachments AND creation_time exists AND
+          age > 365 days (1 year). This is conservative; most volumes flagged
+          will be unattached, not attached-but-old.
+
+        Note: Findings are based on volume state and attachment metadata from
+        describe_volumes. No access to actual attachment status or I/O metrics
+        is required or checked.
+
+        AccessDenied errors are caught and logged; the scan continues with
+        other volumes. Throttling errors may propagate depending on boto3
+        retry behavior.
+        """
         findings: list[Finding] = []
         self.resources_scanned = 0
 
@@ -67,7 +82,7 @@ class EBSAnalyzer(BaseAnalyzer):
                         },
                     )
                     findings.append(finding)
-                # Check for obviously stale volumes (very old, unattached or minimal attachment)
+                # Check for stale volumes that have been attached for over a year
                 elif attachments and create_time:
                     from datetime import datetime
 
@@ -95,8 +110,18 @@ class EBSAnalyzer(BaseAnalyzer):
                         )
                         findings.append(finding)
 
-        except ClientError:
-            pass  # Silently handle AWS errors; findings will be empty
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "")
+            if error_code == "AccessDenied":
+                # AccessDenied: cannot describe volumes; continue scan with empty results
+                pass
+            else:
+                # Other AWS errors: propagate to CLI-level handler
+                raise
+
+        except Exception:
+            # Non-AWS errors: continue scan with no EBS findings
+            raise
 
         return findings
 

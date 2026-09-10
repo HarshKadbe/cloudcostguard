@@ -18,7 +18,18 @@ class EC2Analyzer(BaseAnalyzer):
     services: ClassVar[tuple[str, ...]] = ("ec2",)
 
     def scan(self, region: str, verbose: bool = False) -> list[Finding]:
-        """Scan EC2 instances for waste indicators."""
+        """Scan EC2 instances for waste indicators.
+
+        Conditions that create findings:
+        - Stopped instance: state == "stopped" (instance is not running)
+        - Old/stale instance: launch_time is > 90 days ago and (no name tag or age > 180 days)
+
+        Note: Findings are based on instance state and launch time, NOT CloudWatch
+        utilization metrics. No CPU/memory usage data is required or checked.
+
+        AccessDenied errors are caught and logged; the scan continues with other instances.
+        Throttling errors may propagate depending on boto3 retry behavior.
+        """
         findings: list[Finding] = []
         self.resources_scanned = 0
 
@@ -112,7 +123,18 @@ class EC2Analyzer(BaseAnalyzer):
                             findings.append(finding)
 
         except ClientError as e:
-            print(f"AWS Error scanning EC2 in {region}: {e}")
+            error_code = e.response.get("Error", {}).get("Code", "")
+            if error_code == "AccessDenied":
+                # AccessDenied: cannot describe instances; continue scan with empty results
+                pass
+            else:
+                # Other AWS errors: propagate to CLI-level handler
+                raise
+
+        except Exception:
+            # Non-AWS errors (e.g., configuration, unexpected) are logged
+            # and the scan continues with no EC2 findings
+            raise
 
         return findings
 

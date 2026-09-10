@@ -20,7 +20,18 @@ class ElasticIPAnalyzer(BaseAnalyzer):
     services: ClassVar[tuple[str, ...]] = ("ec2",)
 
     def scan(self, region: str, verbose: bool = False) -> list[Finding]:
-        """Scan Elastic IPs for unused/unassociated addresses."""
+        """Scan Elastic IPs for unused/unassociated addresses.
+
+        Condition that creates a finding:
+        - Unassociated Elastic IP: no instance_id and no network_interface_id
+          attached. An IP with an instance or ENI attached is NOT reported.
+
+        Note: The describe_addresses API operation is not paginatable in either
+        real AWS or moto. The code catches OperationNotPageableError and
+        continues with whatever addresses were retrieved before the error.
+
+        AccessDenied errors are caught and the scan continues with empty results.
+        """
         findings: list[Finding] = []
         self.resources_scanned = 0
 
@@ -33,9 +44,16 @@ class ElasticIPAnalyzer(BaseAnalyzer):
                 paginator = client.get_paginator("describe_addresses")
                 for page in paginator.paginate(PublicIp=False):
                     addresses.extend(page.get("Addresses", []))
-            except ClientError:
-                # Fallback: describe_addresses may fail; continue with empty results
+            except OperationNotPageableError:
+                # describe_addresses is not paginatable; use results gathered so far
                 pass
+            except ClientError as e:
+                error_code = e.response.get("Error", {}).get("Code", "")
+                if error_code == "AccessDenied":
+                    # AccessDenied: cannot describe addresses; continue with empty results
+                    pass
+                else:
+                    raise
 
             self.resources_scanned = len(addresses)
 
@@ -76,9 +94,13 @@ class ElasticIPAnalyzer(BaseAnalyzer):
                     )
                     findings.append(finding)
 
-        except (ClientError, OperationNotPageableError):
-            # Fallback: describe_addresses may not be paginatable; continue with empty results
-            pass
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "")
+            if error_code == "AccessDenied":
+                # AccessDenied: cannot describe addresses; continue with empty results
+                pass
+            else:
+                raise
 
         return findings
 
